@@ -50,23 +50,24 @@ public class Request {
         }
 
 
-
-
         JSONObject sun = myResponse.getJSONObject("sys");
-        int sunRise = sun.getInt("sunrise");
-        int sunSet = sun.getInt("sunset");
-        System.out.println(timezone);
+        int sr = sun.getInt("sunrise");
+        int ss = sun.getInt("sunset");
+
+        final String sunRise = getTimeFromTimezone(timezone, sr);
+        final String sunSet = getTimeFromTimezone(timezone, ss);
+
+        System.out.println(sunRise);
+        System.out.println(sunSet);
 
 
+
+    }
+    public static String getTimeFromTimezone(String timezone, int timestamp) {
         final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
-        final String formattedDtm = Instant.ofEpochSecond(sunSet)
+        return Instant.ofEpochSecond(timestamp)
                 .atZone(ZoneId.of("UTC" + timezone))
                 .format(formatter);
-        System.out.println(formattedDtm);
-
-
-
-
 
     }
 
