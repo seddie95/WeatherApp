@@ -5,31 +5,21 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import GetRequest.ApiKey;
 
 public class Request {
     public static void main(String[] args) throws IOException, InterruptedException, JSONException {
-        String baseUrl = "http://api.openweathermap.org/data/2.5/weather?";
-        String apiKey = GetRequest.ApiKey.getApiKey();
-        double lat = 53.297213;
-        double lon = -6.285571;
-
-        String url = String.format("%slat=%f&lon=%f&appid=%s&units=metric",baseUrl, lat, lon, apiKey);
-
-        HttpClient client = HttpClient.newHttpClient();
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(url))
-                .build();
-
-
-        HttpResponse<String> response = client.send(request,
-                HttpResponse.BodyHandlers.ofString());
-
-        String body = response.body();
-        JSONObject myResponse = new JSONObject(body);
-
+        // instantiate Weather class and call getWeather method
+        Weather weather = new Weather();
+        weather.setLat(42.3601);
+        weather.setLon(-71.0589);
+        JSONObject  myResponse = weather.getWeatherData();
 
         // parse json object
         double visibility = myResponse.getDouble("visibility") / 1000.00;
@@ -44,18 +34,42 @@ public class Request {
         double pressure = main.getDouble("pressure");
 
         //Weather description data
-        JSONObject weather = myResponse.getJSONArray("weather").getJSONObject(0);
-        String description = weather.getString("description");
-        String weatherType = weather.getString("main");
+        JSONObject weatherObject = myResponse.getJSONArray("weather").getJSONObject(0);
+        String description = weatherObject.getString("description");
+        String weatherType = weatherObject.getString("main");
 
         JSONObject wind = myResponse.getJSONObject("wind");
         double windSpeed = (wind.getDouble("speed") * 3600) / 1000.00;
 
-        System.out.println("Wind speed: " + windSpeed);
-        System.out.println("Visibility: " + visibility);
-        System.out.println(myResponse.getString("name"));
-        System.out.println("Real feel: " + realFeel);
+        // get the timezone to work out local sunrise and sunset
+        int tZ = myResponse.getInt("timezone")/3600;
+
+        String timezone = "+"+tZ;
+        if (tZ <0){
+            timezone = ""+tZ;
+        }
+
+
+
+
+        JSONObject sun = myResponse.getJSONObject("sys");
+        int sunRise = sun.getInt("sunrise");
+        int sunSet = sun.getInt("sunset");
+        System.out.println(timezone);
+
+
+        final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
+        final String formattedDtm = Instant.ofEpochSecond(sunSet)
+                .atZone(ZoneId.of("UTC" + timezone))
+                .format(formatter);
+        System.out.println(formattedDtm);
+
+
+
 
 
     }
+
+
+
 }
